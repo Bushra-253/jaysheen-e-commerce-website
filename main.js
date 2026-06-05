@@ -83,9 +83,9 @@ app.listen(5001, () => {
 
 const connectDB = async () => {
     try {
-        await mongoose.connect(
-            'mongodb+srv://nbushranoor520_db_user:<db_password>@cluster0.vc6roq0.mongodb.net/?appName=Cluster0/produt'
-        );
+     await mongoose.connect(
+  "mongodb+srv://nbushranoor520_db_user:Bushra12345@cluster0.vc6roq0.mongodb.net/product?retryWrites=true&w=majority&appName=Cluster0"
+);
 
         console.log('MongoDB connected successfully');
     } catch (error) {
