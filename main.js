@@ -60,7 +60,7 @@ app.use("/cart", cart);
 app.use("/checkout", checkout);
 
 app.use("/uploads", express.static("uploads"));
-
+console.log(process.env.MONGO_URI);
 // MongoDB Connection
 const connectDB = async () => {
   try {
