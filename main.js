@@ -30,22 +30,18 @@ app.use(
 // Session
 const FileStore = FileStoreFactory(session);
 
+app.set("trust proxy", 1);
+
 app.use(
   session({
-    store: new FileStore({
-      path: "./sessions",
-      retries: 0,
-      ttl: 1800,
-      reapInterval: 60,
-    }),
     secret: "mySecretKey",
     resave: false,
     saveUninitialized: false,
     cookie: {
       maxAge: 1000 * 60 * 30,
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: true,      // Railway uses HTTPS
+      sameSite: "none",  // Required if frontend is on Vercel and backend on Railway
     },
   })
 );
