@@ -1,21 +1,18 @@
-import express from 'express'
+import express from "express";
 
 const cart = express.Router();
 
-
-
-
-
 cart.post("/store", (req, res) => {
   try {
+    console.log("SESSION ID:", req.sessionID);
+    console.log("BODY:", req.body);
+
     const { name, image, price, description, quantity } = req.body;
-console.log(req.body)
-    // Create cart session if not exists
+
     if (!req.session.cart) {
       req.session.cart = [];
     }
 
-    // Check if product already exists
     const existingProduct = req.session.cart.find(
       (item) => item.name === name
     );
@@ -23,30 +20,46 @@ console.log(req.body)
     if (existingProduct) {
       existingProduct.quantity += Number(quantity);
 
-      return res.status(200).json({
-        success: true,
-        message: "Quantity updated in cart",
-        data: req.session.cart,
+      req.session.save((err) => {
+        if (err) {
+          return res.status(500).json({
+            success: false,
+            message: err.message,
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: "Quantity updated",
+          data: req.session.cart,
+        });
       });
+
+      return;
     }
 
-    // Add new product
-    const cartItem = {
+    req.session.cart.push({
       name,
       image,
       price,
       description,
       quantity: Number(quantity),
-    };
-
-    req.session.cart.push(cartItem);
-
-    res.status(201).json({
-      success: true,
-      message: "Product added to cart",
-      data: req.session.cart,
     });
 
+    req.session.save((err) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "Product added",
+        data: req.session.cart,
+      });
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -55,63 +68,44 @@ console.log(req.body)
   }
 });
 
-// GET CART ITEMS
-// GET route to fetch all items in the cart
-// GET CART ITEMS
 cart.get("/list", (req, res) => {
-  try {
+  console.log("SESSION ID:", req.sessionID);
+  console.log("CART:", req.session.cart);
 
-    // If cart does not exist, make it an empty array
-    const cartList = req.session.cart || [];
-
-    res.status(200).json({
-      success: true,
-      message: "Cart items retrieved successfully",
-      count: cartList.length,
-      data: cartList,
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to retrieve cart items",
-      error: error.message,
-    });
-  }
+  res.status(200).json({
+    success: true,
+    data: req.session.cart || [],
+  });
 });
 
 cart.delete("/delete", (req, res) => {
   try {
     const { name } = req.body;
 
-    // 1. Check if the cart session even exists or is empty
-    if (!req.session.cart || req.session.cart.length === 0) {
+    if (!req.session.cart) {
       return res.status(400).json({
         success: false,
-        message: "Cart is already empty",
+        message: "Cart empty",
       });
     }
 
-    // 2. Check if the product actually exists in the cart
-    const productExists = req.session.cart.some((item) => item.name === name);
+    req.session.cart = req.session.cart.filter(
+      (item) => item.name !== name
+    );
 
-    if (!productExists) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found in cart",
+    req.session.save((err) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        data: req.session.cart,
       });
-    }
-
-    // 3. Filter out the product to delete it
-    req.session.cart = req.session.cart.filter((item) => item.name !== name);
-
-    // 4. Return the updated cart data back to React
-    res.status(200).json({
-      success: true,
-      message: "Product removed from cart",
-      data: req.session.cart,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
